@@ -30,10 +30,10 @@ Requirements
 -  watson-db
 -  py3k-bcrypt
 
-Issues
+Installation
 ------
 
-.
+``pip install watson-auth``
 
 Testing
 -------
