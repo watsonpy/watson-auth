@@ -14,15 +14,7 @@ Authorization and authentication library for Watson.
 Build Status
 ------------
 
-+-----------+------------------+---------------------+
-| Branch    | Status           | Coverage            |
-+===========+==================+=====================+
-| Master    | |Build StatusM|  | |Coverage Status|   |
-+-----------+------------------+---------------------+
-| Develop   | |Build StatusD|  |                     |
-+-----------+------------------+---------------------+
-
-|Pypi|
+|Build Status| |Coverage Status| |Version| |Downloads| |Licence|
 
 Requirements
 ------------
@@ -52,11 +44,13 @@ Table of Contents
 
 .. include:: toc.rst.inc
 
+.. |Build Status| image:: https://api.travis-ci.org/Bespohk/watson-auth.png?branch=master
+   :target: https://travis-ci.org/Bespohk/watson-auth
 .. |Coverage Status| image:: https://coveralls.io/repos/bespohk/watson-auth/badge.png
    :target: https://coveralls.io/r/bespohk/watson-auth
-.. |Build StatusD| image:: https://api.travis-ci.org/bespohk/watson-auth.png?branch=develop
-   :target: https://travis-ci.org/bespohk/watson-auth
-.. |Build StatusM| image:: https://api.travis-ci.org/bespohk/watson-auth.png?branch=master
-   :target: https://travis-ci.org/bespohk/watson-auth
-.. |Pypi| image:: https://pypip.in/v/watson-auth/badge.png
-   :target: https://crate.io/packages/watson-auth/
+.. |Version| image:: https://pypip.in/v/watson-auth/badge.png
+   :target: https://pypi.python.org/pypi/watson-auth/
+.. |Downloads| image:: https://pypip.in/d/watson-auth/badge.png
+   :target: https://pypi.python.org/pypi/watson-auth/
+.. |Licence| image:: https://pypip.in/license/watson-auth/badge.png
+   :target: https://pypi.python.org/pypi/watson-auth/
