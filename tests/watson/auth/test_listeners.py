@@ -12,12 +12,14 @@ class TestRoute(object):
         request = support.app.container.get('request')
         assert not request.user
         # login the user
+        post_data = 'username=admin&password=test'
         environ = support.sample_environ(
             PATH_INFO='/login',
             REQUEST_METHOD='POST',
-            HTTP_COOKIE='watson.session=1234')
+            HTTP_COOKIE='watson.session=1234',
+            CONTENT_LENGTH=len(post_data))
         environ['wsgi.input'] = BufferedReader(
-            BytesIO(b'username=admin&password=test'))
+            BytesIO(post_data.encode('utf-8')))
         support.app(environ, support.start_response)
 
         support.app(

@@ -74,25 +74,31 @@ class TestLogin(object):
         assert response == 'login'
 
     def test_invalid_user(self):
-        environ = sample_environ(REQUEST_METHOD='POST')
+        post_data = 'username=simon&password=test'
+        environ = sample_environ(REQUEST_METHOD='POST',
+                                 CONTENT_LENGTH=len(post_data))
         environ['wsgi.input'] = BufferedReader(
-            BytesIO(b'username=simon&password=test'))
+            BytesIO(post_data.encode('utf-8')))
         self.controller.request = create_request_from_environ(environ)
         response = self.controller.login_action()
         assert response.headers['location'] == '/login'
 
     def test_invalid_form(self):
-        environ = sample_environ(REQUEST_METHOD='POST')
+        post_data = 'username=simon'
+        environ = sample_environ(REQUEST_METHOD='POST',
+                                 CONTENT_LENGTH=len(post_data))
         environ['wsgi.input'] = BufferedReader(
-            BytesIO(b'username=simon'))
+            BytesIO(post_data.encode('utf-8')))
         self.controller.request = create_request_from_environ(environ)
         self.controller.login_action()
         assert len(self.controller.flash_messages.messages) == 1
 
     def test_valid_user(self):
-        environ = sample_environ(REQUEST_METHOD='POST')
+        post_data = 'username=admin&password=test'
+        environ = sample_environ(REQUEST_METHOD='POST',
+                                 CONTENT_LENGTH=len(post_data))
         environ['wsgi.input'] = BufferedReader(
-            BytesIO(b'username=admin&password=test'))
+            BytesIO(post_data.encode('utf-8')))
         self.controller.request = create_request_from_environ(environ)
         response = self.controller.login_action()
         assert response.headers['location'] == '/'
@@ -105,9 +111,11 @@ class TestLogin(object):
 
 class TestLogout(object):
     def setup(self):
-        environ = sample_environ(REQUEST_METHOD='POST')
+        post_data = 'username=admin&password=test'
+        environ = sample_environ(REQUEST_METHOD='POST',
+                                 CONTENT_LENGTH=len(post_data))
         environ['wsgi.input'] = BufferedReader(
-            BytesIO(b'username=admin&password=test'))
+            BytesIO(post_data.encode('utf-8')))
         self.controller = support.app.container.get(
             'tests.watson.auth.test_decorators.SampleController')
         self.controller.request = create_request_from_environ(environ)
