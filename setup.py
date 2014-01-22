@@ -64,7 +64,7 @@ with open(os.path.join(path, 'requirements.txt')) as f:
 setup(
     name='watson-auth',
     version=watson.auth.__version__,
-    url='http://github.com/bespohk/watson-auth',
+    url='http://github.com/watsonpy/watson-auth',
     description='Authorization and authentication library for Watson.',
     long_description=readme,
 
