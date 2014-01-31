@@ -1,9 +1,2 @@
-# Unit Test
-pytest
-pytest-cov
-coverage
-coveralls
-
-# Watson
 watson-db >= 1.0.0
 py3k-bcrypt

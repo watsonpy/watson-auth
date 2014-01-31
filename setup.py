@@ -60,6 +60,9 @@ with open(os.path.join(path, 'README.rst')) as f:
 with open(os.path.join(path, 'requirements.txt')) as f:
     requirements = f.read().splitlines()
 
+with open(os.path.join(path, 'requirements-test.txt')) as f:
+    test_requirements = f.read().splitlines()
+
 
 setup(
     name='watson-auth',
@@ -105,6 +108,9 @@ setup(
 
     zip_safe=False,
     install_requires=requirements,
+    extras_require={
+        'test': test_requirements
+    },
 
     cmdclass={
         'test': PyTest,
