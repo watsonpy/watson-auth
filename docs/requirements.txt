@@ -1,3 +1,3 @@
 sphinxcontrib-napoleon
-watson-db >= 1.0.0
+watson-db == 1.2.0
 py3k-bcrypt
