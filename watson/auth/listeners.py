@@ -15,16 +15,14 @@ class Init(ContainerAware):
         return self.container.get('application.config')
 
     def __call__(self, event):
-        app = event.target
-        if isinstance(app, applications.Base):
-            # Initialize watson.db if it hasn't been added to the app config
-            db_listener = ('watson.db.listeners.Init', 1, True)
-            if db_listener not in self.app_config['events']['event.mvc.init']:
-                listener = self.container.get('watson.db.listeners.Init')
-                listener(event)
-            self.setup_config()
-            self.setup_listeners()
-            self.setup_authenticator()
+        # Initialize watson.db if it hasn't been added to the app config
+        db_listener = ('watson.db.listeners.Init', 1, True)
+        if db_listener not in self.app_config['events']['event.mvc.init']:
+            listener = self.container.get('watson.db.listeners.Init')
+            listener(event)
+        self.setup_config()
+        self.setup_listeners()
+        self.setup_authenticator()
 
     def setup_config(self):
         auth_config = datastructures.dict_deep_update(
@@ -54,7 +52,7 @@ class Route(ContainerAware):
 
     def __call__(self, event):
         auth_config = self.container.get('application').config['auth']
-        request = event.params['request']
+        request = event.params['context']['request']
         request.user = None
         user_id = request.session[auth_config['session']['key']]
         if user_id:

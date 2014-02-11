@@ -38,7 +38,7 @@ def auth(func=None, roles=None, permissions=None,
     """
     def decorator(func):
         def wrapper(self, *args, **kwargs):
-            auth_config = self.container.get('application').config['auth']
+            auth_config = self.container.get('application.config')['auth']
             user_id = self.request.session[auth_config['session']['key']]
             unauthent_url = unauthenticated_url or auth_config['url'][
                 'unauthenticated']
@@ -97,8 +97,8 @@ def login(func=None, method='POST', form_class=None, auto_redirect=True):
         def wrapper(self, *args, **kwargs):
             if not hasattr(self.request, 'user'):
                 self.request.user = None
-            app = self.container.get('application')
-            auth_config = app.config['auth']
+            auth_config = self.container.get('application.config')['auth']
+            valid = True
             if self.request.user:
                 # User is already authenticated, redirect to success url
                 if auto_redirect:
@@ -126,14 +126,13 @@ def login(func=None, method='POST', form_class=None, auto_redirect=True):
                                     auth_config['url']['login_success'])
                             )
                     else:
-                        self.flash_messages.add(
-                            form_config['invalid_message'],
-                            'error')
-                        return self.redirect(auth_config['url']['login'])
+                        valid = False
                 else:
-                    self.flash_messages.add(
-                        form_config['invalid_message'],
-                        'error')
+                    valid = False
+            if not valid:
+                self.flash_messages.add(
+                    form_config['invalid_message'], 'error')
+                return self.redirect(auth_config['url']['login'])
             return func(self, **kwargs)
         return wrapper
     if func:

@@ -55,6 +55,9 @@ app_config = {
             }
         }
     },
+    'session': {
+        'class': 'watson.http.sessions.Memory'
+    },
     'views': {
         'templates': {
             'testcontroller/get': 'blank'

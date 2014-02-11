@@ -2,7 +2,8 @@
 from io import BytesIO, BufferedReader
 from wsgiref import util
 from pytest import raises
-from watson.http.messages import create_request_from_environ
+from watson.events import types
+from watson.http.messages import Request
 from watson.framework import controllers, exceptions
 from tests.watson.auth import support
 from watson.auth.decorators import auth, login, logout
@@ -66,7 +67,12 @@ class TestLogin(object):
     def setup(self):
         controller = support.app.container.get(
             'tests.watson.auth.test_decorators.SampleController')
-        controller.request = create_request_from_environ(sample_environ())
+        event = types.Event('test', params={
+            'context': {
+                'request': Request.from_environ(sample_environ(), 'watson.http.sessions.Memory')
+            }
+        })
+        controller.event = event
         self.controller = controller
 
     def test_no_post(self):
@@ -79,7 +85,7 @@ class TestLogin(object):
                                  CONTENT_LENGTH=len(post_data))
         environ['wsgi.input'] = BufferedReader(
             BytesIO(post_data.encode('utf-8')))
-        self.controller.request = create_request_from_environ(environ)
+        self.controller.request = Request.from_environ(environ, 'watson.http.sessions.Memory')
         response = self.controller.login_action()
         assert response.headers['location'] == '/login'
 
@@ -89,9 +95,9 @@ class TestLogin(object):
                                  CONTENT_LENGTH=len(post_data))
         environ['wsgi.input'] = BufferedReader(
             BytesIO(post_data.encode('utf-8')))
-        self.controller.request = create_request_from_environ(environ)
+        self.controller.request = Request.from_environ(environ, 'watson.http.sessions.Memory')
         self.controller.login_action()
-        assert len(self.controller.flash_messages.messages) == 1
+        assert len(self.controller.flash_messages) == 1
 
     def test_valid_user(self):
         post_data = 'username=admin&password=test'
@@ -99,7 +105,7 @@ class TestLogin(object):
                                  CONTENT_LENGTH=len(post_data))
         environ['wsgi.input'] = BufferedReader(
             BytesIO(post_data.encode('utf-8')))
-        self.controller.request = create_request_from_environ(environ)
+        self.controller.request = Request.from_environ(environ, 'watson.http.sessions.Memory')
         response = self.controller.login_action()
         assert response.headers['location'] == '/'
 
@@ -118,7 +124,7 @@ class TestLogout(object):
             BytesIO(post_data.encode('utf-8')))
         self.controller = support.app.container.get(
             'tests.watson.auth.test_decorators.SampleController')
-        self.controller.request = create_request_from_environ(environ)
+        self.controller.request = Request.from_environ(environ, 'watson.http.sessions.Memory')
         self.controller.login_action()
 
     def test_logout(self):
@@ -135,7 +141,7 @@ class TestAuth(object):
     def setup(self):
         controller = support.app.container.get(
             'tests.watson.auth.test_decorators.SampleController')
-        controller.request = create_request_from_environ(sample_environ())
+        controller.request = Request.from_environ(sample_environ(), 'watson.http.sessions.Memory')
         self.controller = controller
 
     def test_unauthenticated(self):
