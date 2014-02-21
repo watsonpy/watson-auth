@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from watson.common import datastructures
 from watson.di import ContainerAware
-from watson.framework import applications, events
+from watson.framework import events
 from watson.auth import config
 
 
@@ -17,7 +17,7 @@ class Init(ContainerAware):
     def __call__(self, event):
         # Initialize watson.db if it hasn't been added to the app config
         db_listener = ('watson.db.listeners.Init', 1, True)
-        if db_listener not in self.app_config['events']['event.mvc.init']:
+        if db_listener not in self.app_config['events'][events.INIT]:
             listener = self.container.get('watson.db.listeners.Init')
             listener(event)
         self.setup_config()
