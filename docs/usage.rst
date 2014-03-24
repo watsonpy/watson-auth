@@ -69,7 +69,7 @@ controller that renders the login view.
 
 ::
 
-    from watson.auth.decorators import logic, logout
+    from watson.auth.decorators import login, logout
     from watson.auth import forms
     from watson.framework import controllers
 
