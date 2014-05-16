@@ -114,8 +114,8 @@ def login(func=None, method='POST', form_class=None, auto_redirect=True):
                     username_field = getattr(form, form_config['username'])
                     password_field = getattr(form, form_config['password'])
                     user = authenticator.authenticate(
-                        username=username_field.value,
-                        password=password_field.value)
+                        username=username_field,
+                        password=password_field)
                     if user:
                         self.request.user = user
                         self.request.session[auth_config['session']['key']] = getattr(
