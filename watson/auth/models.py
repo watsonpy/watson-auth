@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Table, SmallInteger
-from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.ext.declarative import declared_attr, declarative_base
 from sqlalchemy.orm import relationship
 from watson.common import imports
 from watson.framework.applications import Base
 from watson.auth import authentication, authorization
 
-Model = Base.global_app.container.get('sqlalchemy_declarative_base')
+try:
+    Model = Base.global_app.container.get('sqlalchemy_declarative_base')
+except:
+    # Application is not instantiated
+    Model = declarative_base(name='Model')
 
 
 class RolePermission(Model):
