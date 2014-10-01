@@ -141,8 +141,8 @@ First, define some roles for the system and add them to the session:
 
     from watson.auth import models
 
-    role_regular = models.Role(name='Regular')
-    role_admin = models.Role(name='Admin')
+    role_regular = models.Role(name='Regular', key='regular')
+    role_admin = models.Role(name='Admin', key='admin')
 
     session.add(role_regular)
     session.add(role_admin)
