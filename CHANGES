@@ -1,0 +1,5 @@
+2.0.0
+
+- Now requires watson.db 2.0.0
+- BC: Role.key now used for validating role instead of role.name
+- BC: Model declarative base moved from auth, now relies on watson.db

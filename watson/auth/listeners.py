@@ -10,9 +10,13 @@ class Init(ContainerAware):
     """Bootstraps watson.auth into the event system of watson.
     """
 
-    @property
-    def app_config(self):
-        return self.container.get('application.config')
+    __ioc_definition__ = {
+        'property': {
+            'app_config': 'application.config',
+        }
+    }
+
+    app_config = None
 
     def __call__(self, event):
         # Initialize watson.db if it hasn't been added to the app config

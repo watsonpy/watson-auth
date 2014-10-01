@@ -10,19 +10,19 @@ class TestAcl(object):
 
     def test_user_has_roles(self):
         acl = authorization.Acl(support.regular_user)
-        assert acl.has_role('Regular') is True
+        assert acl.has_role('regular') is True
 
     def test_user_doesnt_have_role(self):
         acl = authorization.Acl(support.regular_user)
-        assert acl.has_role('Admin') is False
+        assert acl.has_role('admin') is False
 
     def test_user_has_one_role_of(self):
         acl = authorization.Acl(support.regular_user)
-        assert acl.has_role(('Regular', 'Guest'))
+        assert acl.has_role(('regular', 'guest'))
 
     def test_user_has_no_role_of(self):
         acl = authorization.Acl(support.regular_user)
-        assert not acl.has_role(('Admin', 'Guest'))
+        assert not acl.has_role(('admin', 'guest'))
 
     def test_user_has_inherited_permission(self):
         acl = authorization.Acl(support.regular_user)
@@ -51,5 +51,5 @@ class TestAcl(object):
         acl = authorization.Acl(support.complex_user)
         assert acl.has_permission('create')
         assert not acl.has_permission('delete')
-        assert acl.has_role('Guest')
-        assert acl.has_role('Admin')
+        assert acl.has_role('guest')
+        assert acl.has_role('admin')

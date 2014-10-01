@@ -26,7 +26,7 @@ class SampleController(controllers.Action):
     def index_action(self):
         return 'index'
 
-    @auth(roles='Admin')
+    @auth(roles='admin')
     def admin_role_action(self):
         return 'admin role'
 
@@ -34,19 +34,19 @@ class SampleController(controllers.Action):
     def permissions_action(self):
         return 'permissions'
 
-    @auth(roles='Admin', permissions='create')
+    @auth(roles='admin', permissions='create')
     def permissions_role(self):
         return 'permissions and role'
 
-    @auth(roles='Admin', unauthenticated_url='/unauthed-test')
+    @auth(roles='admin', unauthenticated_url='/unauthed-test')
     def unauthed_custom_url_action(self):
         pass
 
-    @auth(roles='Admin', unauthorized_url='/unauthorized-test')
+    @auth(roles='admin', unauthorized_url='/unauthorized-test')
     def unauthorized_custom_url_action(self):
         pass
 
-    @auth(roles='Admin', should_404=True)
+    @auth(roles='admin', should_404=True)
     def unauthorized_404_action(self):
         pass
 

@@ -33,16 +33,16 @@ class Acl(object):
     def permissions(self):
         return self._permissions
 
-    def has_role(self, role_name):
+    def has_role(self, role_key):
         """Validates a role against the associated roles on a user.
 
         Args:
-            role_name (string|tuple|list): The role(s) to validate against.
+            role_key (string|tuple|list): The role(s) to validate against.
         """
         for role in self.user.roles:
-            if isinstance(role_name, (list, tuple)) and role.name in role_name:
+            if isinstance(role_key, (list, tuple)) and role.key in role_key:
                 return True
-            elif role.name == role_name:
+            elif role.key == role_key:
                 return True
         return False
 

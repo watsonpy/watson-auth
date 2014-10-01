@@ -21,24 +21,18 @@ app_config = {
         'enabled': True
     },
     'db': {
-        'default': {
-            'connection_string': 'sqlite:///:memory:',
-            'engine_options': {
-                'echo': False
+        'connections': {
+            'default': {
+                'connection_string': 'sqlite:///:memory:',
+                'engine_options': {
+                    'echo': False
+                }
             }
         }
     },
     'auth': {
         'db': {
             'user_model': 'tests.watson.auth.support.TestUser'
-        }
-    },
-    'dependencies': {
-        'definitions': {
-            'sqlalchemy_declarative_base': {
-                # bind to the instance of sqlalchemy_engine
-                'item': lambda container: declarative_base(name='Model')
-            },
         }
     },
     'routes': {
@@ -102,9 +96,9 @@ models.Model.metadata.create_all(engine)
 session = app.container.get('sqlalchemy_session_default')
 
 # Add some roles
-role_guest = models.Role(name='Guest')
-role_regular = models.Role(name='Regular')
-role_admin = models.Role(name='Admin')
+role_guest = models.Role(name='Guest', key='guest')
+role_regular = models.Role(name='Regular', key='regular')
+role_admin = models.Role(name='Admin', key='admin')
 session.add(role_guest)
 session.add(role_regular)
 session.add(role_admin)
