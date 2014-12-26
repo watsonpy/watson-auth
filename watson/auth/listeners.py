@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from watson.common import datastructures
+from watson.console.command import find_commands_in_module
 from watson.di import ContainerAware
 from watson.framework import events
-from watson.auth import config
+from watson.auth import config, commands
 
 
 class Init(ContainerAware):
@@ -19,14 +20,27 @@ class Init(ContainerAware):
     app_config = None
 
     def __call__(self, event):
+        app = event.target
+        self.setup_database(event)
+        self.setup_config()
+        self.load_default_commands(app.config)
+        self.setup_listeners()
+        self.setup_authenticator()
+
+    def setup_database(self, event):
         # Initialize watson.db if it hasn't been added to the app config
         db_listener = ('watson.db.listeners.Init', 1, True)
         if db_listener not in self.app_config['events'][events.INIT]:
             listener = self.container.get('watson.db.listeners.Init')
             listener(event)
-        self.setup_config()
-        self.setup_listeners()
-        self.setup_authenticator()
+
+    def load_default_commands(self, config):
+        """Load some existing
+        """
+        existing_commands = config.get('commands', [])
+        db_commands = find_commands_in_module(commands)
+        db_commands.extend(existing_commands)
+        config['commands'] = db_commands
 
     def setup_config(self):
         auth_config = datastructures.dict_deep_update(
