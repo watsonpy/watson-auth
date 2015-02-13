@@ -1,2 +1,2 @@
 watson-db >= 2.0.0
-py3k-bcrypt
+bcrypt

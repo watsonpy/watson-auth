@@ -4,7 +4,7 @@ from watson.common import imports, decorators
 from sqlalchemy.orm import exc
 
 
-def generate_password(password, rounds=10):
+def generate_password(password, rounds=10, encoding='utf-8'):
     """Generate a new password based on a random salt.
 
     Args:
@@ -15,10 +15,10 @@ def generate_password(password, rounds=10):
         mixed: The generated password and the salt used
     """
     salt = bcrypt.gensalt(rounds)
-    return bcrypt.hashpw(password, salt), salt
+    return bcrypt.hashpw(password.encode(encoding), salt), salt
 
 
-def check_password(password, existing_password, salt):
+def check_password(password, existing_password, salt, encoding='utf-8'):
     """Validate a password against an existing password and the salt used to
     generate it.
 
@@ -30,7 +30,7 @@ def check_password(password, existing_password, salt):
     Returns:
         boolean: True/False if valid or invalid
     """
-    return bcrypt.hashpw(password, salt) == existing_password
+    return bcrypt.hashpw(password.encode(encoding), salt) == existing_password
 
 
 class Authenticator(object):
@@ -91,10 +91,15 @@ class Authenticator(object):
             username (string): The username of the user.
             password (string): The password of the user.
         """
-        if len(password) > self._config['password']['max_length']:
+        password_config = self._config['password']
+        if len(password) > password_config['max_length']:
             return None
         user = self.get_user(username)
         if user:
-            if check_password(password, user.password, user.salt):
+            if check_password(
+                password,
+                user.password,
+                user.salt,
+                password_config['encoding']):
                 return user
         return None

@@ -22,7 +22,8 @@ defaults = {
         'key': 'watson.user'
     },
     'password': {
-        'max_length': 30
+        'max_length': 30,
+        'encoding': 'utf-8'
     }
 }
 

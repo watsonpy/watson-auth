@@ -7,10 +7,7 @@ from sqlalchemy.orm import relationship
 from watson.common import imports
 from watson.auth import authentication, authorization
 from watson.db.models import Model
-
-
-def _table_attr(obj, attr):
-    return '{}.{}'.format(obj.__tablename__, attr)
+from watson.db.utils import _table_attr
 
 
 class Permission(Model):
