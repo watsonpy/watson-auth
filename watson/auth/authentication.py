@@ -96,10 +96,7 @@ class Authenticator(object):
             return None
         user = self.get_user(username)
         if user:
-            if check_password(
-                password,
-                user.password,
-                user.salt,
-                password_config['encoding']):
+            if check_password(password, user.password, user.salt,
+                              password_config['encoding']):
                 return user
         return None
