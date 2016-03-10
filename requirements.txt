@@ -1,2 +1,2 @@
-watson-db >= 2.0.0
+watson-db >= 2.1.2
 bcrypt
