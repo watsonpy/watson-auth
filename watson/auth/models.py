@@ -65,6 +65,7 @@ class UserMixin(object):
         date updated_date: The time the user was updated.
     """
     __tablename__ = 'users'
+    _acl_class = authorization.Acl
     _acl = None
     id = Column(Integer, primary_key=True)
     _password = Column(String(255), name='password')
@@ -79,7 +80,7 @@ class UserMixin(object):
         See watson.auth.authorization.Acl for more information.
         """
         if not self._acl:
-            self._acl = authorization.Acl(self)
+            self._acl = self._acl_class(self)
         return self._acl
 
     @declared_attr
