@@ -12,6 +12,7 @@ defaults = {
         'login': '/login',
         'login_success': '/',
     },
+    'redirect_to_last': False,
     'form': {
         'class': 'watson.auth.forms.Login',
         'username': 'username',

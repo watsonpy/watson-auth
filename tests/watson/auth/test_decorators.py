@@ -42,6 +42,14 @@ class SampleController(controllers.Action):
     def unauthed_custom_url_action(self):
         pass
 
+    @auth(roles='admin', redirect=True)
+    def unauthed_url_redirect(self):
+        pass
+
+    @login
+    def login_redirect_action(self):
+        return 'login'
+
     @auth(roles='admin', unauthorized_url='/unauthorized-test')
     def unauthorized_custom_url_action(self):
         pass
@@ -113,6 +121,18 @@ class TestLogin(object):
         self.controller.request.user = support.regular_user
         response = self.controller.login_action()
         assert response.headers['location'] == '/'
+
+    def test_login_redirect_to_referrer(self):
+        post_data = 'username=admin&password=test'
+        environ = sample_environ(REQUEST_METHOD='POST',
+                                 CONTENT_LENGTH=len(post_data),
+                                 PATH_INFO='/login',
+                                 QUERY_STRING='redirect=http%3A%2F%2F127.0.0.1%2Fexisting-url%253Fto-here%2526and-here')
+        environ['wsgi.input'] = BufferedReader(
+            BytesIO(post_data.encode('utf-8')))
+        self.controller.request = Request.from_environ(environ, 'watson.http.sessions.Memory')
+        response = self.controller.login_redirect_action()
+        assert response.headers['location'] == 'http://127.0.0.1/existing-url?to-here&and-here'
 
 
 class TestLogout(object):
@@ -196,3 +216,9 @@ class TestAuth(object):
         with raises(exceptions.NotFoundError):
             self.controller.request.session['watson.user'] = 'regular'
             self.controller.unauthorized_404_action()
+
+    def test_redirect_to_login_with_existing_url(self):
+        environ = sample_environ(PATH_INFO='/existing-url', QUERY_STRING='to-here&and-here')
+        self.controller.request = Request.from_environ(environ, 'watson.http.sessions.Memory')
+        response = self.controller.unauthed_url_redirect()
+        assert response.headers['location'] == '/login?redirect=http%3A%2F%2F127.0.0.1%2Fexisting-url%3Fto-here%26and-here'

@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
+from urllib import parse
 from watson.common import imports
 from watson.framework import exceptions
 
 
 def auth(func=None, roles=None, permissions=None,
          unauthenticated_url=None, unauthorized_url=None,
-         should_404=False):
+         should_404=False, redirect=False):
     """Makes a controller action require an authenticated user.
 
     By setting additional roles and permissions, finer control can be given
@@ -20,6 +21,7 @@ def auth(func=None, roles=None, permissions=None,
         unauthorized_url (string): The url to redirect to if the user does
                                    not have permission.
         should_404 (boolean): Raise a 404 instead of redirecting.
+        redirect (boolean): Remember the url to redirect to after login.
 
     Returns:
         The controller response.
@@ -44,6 +46,9 @@ def auth(func=None, roles=None, permissions=None,
                 'unauthenticated']
             # User has not been authenticated
             if not user_id:
+                if redirect or auth_config['redirect_to_last']:
+                    unauthent_url = '{}?redirect={}'.format(
+                        unauthent_url, parse.quote_plus(str(self.request.url)))
                 return self.redirect(unauthent_url)
             authenticator = self.container.get('auth_authenticator')
             if not hasattr(self.request, 'user'):
@@ -121,10 +126,10 @@ def login(func=None, method='POST', form_class=None, auto_redirect=True):
                         self.request.session[auth_config['session']['key']] = getattr(
                             user, auth_config['db']['username_field'])
                         if auto_redirect:
-                            return (
-                                self.redirect(
-                                    auth_config['url']['login_success'])
-                            )
+                            redirect_url = auth_config['url']['login_success']
+                            if self.request.get['redirect']:
+                                redirect_url = parse.unquote_plus(self.request.get['redirect'])
+                            return self.redirect(redirect_url)
                     else:
                         valid = False
                 else:
