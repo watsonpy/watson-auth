@@ -9,7 +9,7 @@ Docs <http://watson-auth.readthedocs.org/>`__.
 Build Status
 ^^^^^^^^^^^^
 
-|Build Status| |Coverage Status| |Version| |Downloads| |Licence|
+|Build Status| |Coverage Status| |Version|
 
 Installation
 ------------
@@ -22,13 +22,9 @@ Dependencies
 -  watson-db
 -  py3k-bcrypt
 
-.. |Build Status| image:: https://api.travis-ci.org/watsonpy/watson-auth.png?branch=master
+.. |Build Status| image:: https://img.shields.io/travis/watsonpy/watson-auth.svg?maxAge=2592000
    :target: https://travis-ci.org/watsonpy/watson-auth
-.. |Coverage Status| image:: https://coveralls.io/repos/watsonpy/watson-auth/badge.png
+.. |Coverage Status| image:: https://img.shields.io/coveralls/watsonpy/watson-auth.svg?maxAge=2592000
    :target: https://coveralls.io/r/watsonpy/watson-auth
-.. |Version| image:: https://pypip.in/v/watson-auth/badge.png
-   :target: https://pypi.python.org/pypi/watson-auth/
-.. |Downloads| image:: https://pypip.in/d/watson-auth/badge.png
-   :target: https://pypi.python.org/pypi/watson-auth/
-.. |Licence| image:: https://pypip.in/license/watson-auth/badge.png
+.. |Version| image:: https://img.shields.io/pypi/v/watson-auth.svg?maxAge=2592000
    :target: https://pypi.python.org/pypi/watson-auth/
