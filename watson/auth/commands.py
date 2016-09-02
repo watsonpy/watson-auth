@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from watson.console import command, ConsoleError
 from watson.console.decorators import arg
+from watson.common import imports
 from watson.db.session import NAME as session_name
+from watson.db.contextmanagers import transaction_scope
 from watson.di import ContainerAware
 from watson.auth import authentication
 
@@ -51,6 +53,91 @@ class Auth(command.Base, BaseAuthCommand):
         from watson.auth.models import Role
         for role in session.query(Role):
             self.write('Role: {} (key: {})'.format(role.name, role.key))
+
+    @arg('key')
+    @arg('name')
+    @arg('database', optional=True)
+    def add_role(self, key, name, database):
+        """Adds a new role to the database.
+
+        Args:
+            key: The identifier for the role
+            name: The human readable name for the role
+            database: The name of the database session.
+        """
+        session = ensure_session_in_container(self.container, database)
+        from watson.auth.models import Role
+        role = Role(key=key, name=name)
+        with transaction_scope(session) as session:
+            session.add(role)
+            self.write('Role: {} (key: {}) added!'.format(name, key))
+
+    @arg('key')
+    @arg('name')
+    @arg('database', optional=True)
+    def add_permission(self, key, name, database):
+        """Adds a new permission to the database.
+
+        Args:
+            key: The identifier for the permission
+            name: The human readable name for the permission
+            database: The name of the database session.
+        """
+        session = ensure_session_in_container(self.container, database)
+        from watson.auth.models import Permission
+        permission = Permission(key=key, name=name)
+        with transaction_scope(session) as session:
+            session.add(permission)
+            self.write('Permission: {} (key: {}) added!'.format(name, key))
+
+    @arg('permission_key')
+    @arg('role_key')
+    @arg('value', optional=True)
+    @arg('database', optional=True)
+    def permission_to_role(self, permission_key, role_key, value, database):
+        """Attaches a permission to a role, with a default of False.
+
+        Args:
+            permission_key: The identifier for the permission
+            role_key: The identifier for the permission
+            value: The value of the permission (1 or 0)
+            database: The name of the database session.
+        """
+        session = ensure_session_in_container(self.container, database)
+        from watson.auth.models import Role
+        from watson.auth.models import Permission
+        permission = session.query(Permission).filter_by(key=permission_key).first()
+        role = session.query(Role).filter_by(key=role_key).first()
+        enabled = True if value else False
+        role.add_permission(permission, value=enabled)
+        session.commit()
+        self.write(
+            'Added permission {} ({}) to role {} ({}) with value: {}'.format(
+                permission.name, permission.key,
+                role.name, role.key,
+                enabled))
+
+    @arg('username')
+    @arg('password')
+    @arg('database', optional=True)
+    def create_user(self, username, password, database):
+        """Create a new user.
+
+        Args:
+            username: The username of the user
+            password: The password of the user
+            database: The name of the database session.
+        """
+        session = ensure_session_in_container(self.container, database)
+        db_config = self.config['db']
+        user_model = db_config['user_model']
+        model_class = imports.load_definition_from_string(user_model)
+        with transaction_scope(session) as session:
+            user = model_class()
+            setattr(user, db_config['username_field'], username)
+            setattr(user, 'password', password)
+            session.add(user)
+            self.write('Created user {}'.format(username))
 
     @arg('database', optional=True)
     def list_permissions(self, database):

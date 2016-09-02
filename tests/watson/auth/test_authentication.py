@@ -13,6 +13,9 @@ class TestPasswords(object):
         assert authentication.check_password('test', password, salt)
         assert not authentication.check_password('testing', password, salt)
 
+    def test_forgotten_token(self):
+        assert authentication.generate_forgotten_token()
+
 
 class TestAuthenticator(object):
     authenticator = None
@@ -36,3 +39,21 @@ class TestAuthenticator(object):
 
     def test_authenticate_password_longer_max_length(self):
         assert not self.authenticator.authenticate('test', '1234567890123456789012345678901')
+
+
+class TestForgottenPasswordTokenManager(object):
+    def setup(self):
+        self.authenticator = support.app.container.get('auth_authenticator')
+        self.manager = authentication.ForgottenPasswordTokenManager(
+            config=support.app.container.get('application.config')['auth']['forgotten_password'],
+            session=self.authenticator.session,
+            mailer=support.app.container.get('mailer'),
+            email_field='email')
+
+    def test_create_token(self):
+        user = self.authenticator.get_user('test')
+        token = self.manager.create_token(
+            user, request=support.request)
+        assert token.user == user
+        token = self.manager.get_token(token=token.token)
+        assert token.user == user

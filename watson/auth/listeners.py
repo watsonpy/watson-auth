@@ -46,12 +46,16 @@ class Init(ContainerAware):
         auth_config = datastructures.dict_deep_update(
             config.defaults, self.app_config.get('auth', {}))
         self.app_config['auth'] = auth_config
+        self.container.get('jinja2_renderer').add_package_loader(
+            'watson.auth', 'views')
 
     def setup_authenticator(self):
-        dependency_config = datastructures.dict_deep_update(
-            config.definitions['auth_authenticator'], self.app_config['dependencies']['definitions'].get('auth_authenticator', {}))
-        self.app_config['dependencies']['definitions']['auth_authenticator'] = dependency_config
-        self.container.definitions['auth_authenticator'] = dependency_config
+        for name, definition in config.definitions.items():
+            dependency_config = datastructures.dict_deep_update(
+                config.definitions[name],
+                self.app_config['dependencies']['definitions'].get(name, {}))
+            self.app_config['dependencies']['definitions'][name] = dependency_config
+            self.container.definitions[name] = dependency_config
 
     def setup_listeners(self):
         dispatcher = self.container.get('shared_event_dispatcher')

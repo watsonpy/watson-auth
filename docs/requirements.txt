@@ -1,3 +1,5 @@
 sphinxcontrib-napoleon
-watson-db >= 2.1.2
+watson-db
+watson-common
+watson-mail
 bcrypt

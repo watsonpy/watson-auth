@@ -1,2 +1,5 @@
-watson-db >= 2.1.2
+watson-db >= 2.4.0
+watson-validators >= 1.0.1
+watson-form >= 3.1.3
+watson-mail >= 1.0.0
 bcrypt

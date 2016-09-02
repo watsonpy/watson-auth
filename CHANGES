@@ -1,3 +1,12 @@
+3.0.0
+- BC: Password reset (forgotten password) functionality added, new fields added to user class and moved config for form. Run `./console.py db:migrate revision --autogenerate` to generate the updated schema changes.
+- BC: Refactor of configuration settings
+- Ability to redirect user back to the previous non-authenticated page on successful login
+- Custom validators can be used within the auth decorators
+- Additional console commands to create roles and permissions
+- Requires watson.db >= 2.3.0
+
+
 2.0.0
 
 - Now requires watson.db 2.0.0

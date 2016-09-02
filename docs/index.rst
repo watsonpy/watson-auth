@@ -14,7 +14,7 @@ Authorization and authentication library for Watson.
 Build Status
 ------------
 
-|Build Status| |Coverage Status| |Version| |Downloads| |Licence|
+|Build Status| |Coverage Status| |Version|
 
 Requirements
 ------------

@@ -93,6 +93,10 @@ class UserMixin(object):
                             secondary=UsersHasRole.__tablename__,
                             backref='roles', cascade=None)
 
+    @declared_attr
+    def forgotten_password_tokens(cls):
+        return relationship(ForgottenPasswordToken, backref='user', cascade='all')
+
     @property
     def password(self):
         """Return the password.
@@ -165,3 +169,15 @@ class UsersHasRole(Model):
     role_id = Column(Integer,
                      ForeignKey(_table_attr(Role, 'id')),
                      primary_key=True)
+
+
+class ForgottenPasswordToken(Model):
+    id = Column(Integer, primary_key=True)
+    token = Column(String(255))
+    user_id = Column(Integer,
+                     ForeignKey(_table_attr(UserMixin, 'id')))
+    created_date = Column(DateTime, default=datetime.now)
+
+    def __repr__(self):
+        return '<{0} user id:{1}>'.format(
+            imports.get_qualified_name(self), self.user.id)

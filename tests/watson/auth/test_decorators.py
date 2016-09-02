@@ -6,7 +6,9 @@ from watson.events import types
 from watson.http.messages import Request
 from watson.framework import controllers, exceptions
 from tests.watson.auth import support
-from watson.auth.decorators import auth, login, logout
+from watson.auth.decorators import auth, login, logout, forgotten, reset
+from watson.auth import authentication
+from watson.validators import abc
 
 
 def start_response(status_line, headers):
@@ -18,6 +20,16 @@ def sample_environ(**kwargs):
     util.setup_testing_defaults(environ)
     environ.update(**kwargs)
     return environ
+
+
+class SampleValidValidator(abc.Validator):
+    def __call__(self, value):
+        return True
+
+
+class SampleInvalidValidator(abc.Validator):
+    def __call__(self, value):
+        return False
 
 
 class SampleController(controllers.Action):
@@ -47,7 +59,7 @@ class SampleController(controllers.Action):
         pass
 
     @login
-    def login_redirect_action(self):
+    def login_redirect_action(self, form):
         return 'login'
 
     @auth(roles='admin', unauthorized_url='/unauthorized-test')
@@ -58,8 +70,16 @@ class SampleController(controllers.Action):
     def unauthorized_404_action(self):
         pass
 
+    @auth(requires=[SampleValidValidator()])
+    def valid_action(self):
+        return 'valid'
+
+    @auth(requires=[SampleInvalidValidator()], unauthorized_url='/unauthorized-test')
+    def invalid_action(self):
+        return 'invalid'
+
     @login
-    def login_action(self):
+    def login_action(self, form):
         return 'login'
 
     @logout
@@ -69,6 +89,14 @@ class SampleController(controllers.Action):
     @logout(redirect_url='/custom-logout')
     def logout_custom_action(self):
         return 'logout'
+
+    @forgotten
+    def forgotten_action(self, form):
+        return 'forgotten'
+
+    @reset(authenticate_on_reset=True)
+    def reset_action(self, form):
+        return 'reset'
 
 
 class TestLogin(object):
@@ -181,7 +209,7 @@ class TestAuth(object):
     def test_authenticated_no_matching_role(self):
         self.controller.request.session['watson.user'] = 'regular'
         response = self.controller.admin_role_action()
-        assert response.headers['location'] == '/unauthorized'
+        assert response.headers['location'] == 'unauthorized'
 
     def test_authenticated_matching_role(self):
         self.controller.request.session['watson.user'] = 'admin'
@@ -191,7 +219,7 @@ class TestAuth(object):
     def test_authenticated_no_matching_permission(self):
         self.controller.request.session['watson.user'] = 'regular'
         response = self.controller.permissions_action()
-        assert response.headers['location'] == '/unauthorized'
+        assert response.headers['location'] == 'unauthorized'
 
     def test_authenticated_matching_permission(self):
         self.controller.request.session['watson.user'] = 'admin'
@@ -221,4 +249,84 @@ class TestAuth(object):
         environ = sample_environ(PATH_INFO='/existing-url', QUERY_STRING='to-here&and-here')
         self.controller.request = Request.from_environ(environ, 'watson.http.sessions.Memory')
         response = self.controller.unauthed_url_redirect()
-        assert response.headers['location'] == '/login?redirect=http%3A%2F%2F127.0.0.1%2Fexisting-url%3Fto-here%26and-here'
+        assert response.headers['location'] == 'login?redirect=http%3A%2F%2F127.0.0.1%2Fexisting-url%3Fto-here%26and-here'
+
+    def test_valid_requires(self):
+        self.controller.request.session['watson.user'] = 'regular'
+        assert self.controller.valid_action() == 'valid'
+
+    def test_invalid_requires(self):
+        self.controller.request.session['watson.user'] = 'regular'
+        response = self.controller.invalid_action()
+        assert response.headers['location'] == '/unauthorized-test'
+
+
+class TestForgottenPassword(object):
+
+    def setup(self):
+        controller = support.app.container.get(
+            'tests.watson.auth.test_decorators.SampleController')
+        controller.request = Request.from_environ(sample_environ(), 'watson.http.sessions.Memory')
+        self.controller = controller
+
+    def test_valid_user(self):
+        post_data = 'username=test'
+        environ = sample_environ(PATH_INFO='/forgotten-password',
+                                 REQUEST_METHOD='POST',
+                                 CONTENT_LENGTH=len(post_data))
+        environ['wsgi.input'] = BufferedReader(
+            BytesIO(post_data.encode('utf-8')))
+        self.controller.request = Request.from_environ(environ, 'watson.http.sessions.Memory')
+        response = self.controller.forgotten_action()
+        assert response.headers['location'] == 'http://127.0.0.1/forgotten-password'
+
+    def test_invalid_user(self):
+        post_data = 'username=doesnt_exist'
+        environ = sample_environ(PATH_INFO='/forgotten-password',
+                                 REQUEST_METHOD='POST',
+                                 CONTENT_LENGTH=len(post_data))
+        environ['wsgi.input'] = BufferedReader(
+            BytesIO(post_data.encode('utf-8')))
+        self.controller.request = Request.from_environ(environ, 'watson.http.sessions.Memory')
+        response = self.controller.forgotten_action()
+        assert response == 'forgotten'
+
+
+class TestResetPassword(object):
+    def setup(self):
+        controller = support.app.container.get(
+            'tests.watson.auth.test_decorators.SampleController')
+        controller.request = Request.from_environ(sample_environ(), 'watson.http.sessions.Memory')
+        self.controller = controller
+
+    def test_valid_token(self):
+        authenticator = support.app.container.get('auth_authenticator')
+        manager = authentication.ForgottenPasswordTokenManager(
+            config=support.app.container.get('application.config')['auth']['forgotten_password'],
+            session=authenticator.session,
+            mailer=support.app.container.get('mailer'),
+            email_field='email')
+        user = authenticator.get_user('test')
+        token = manager.create_token(
+            user, request=support.request)
+        post_data = 'password=test1&confirm_password=test1'
+        environ = sample_environ(PATH_INFO='/reset-password',
+                                 QUERY_STRING='token={}'.format(token.token),
+                                 REQUEST_METHOD='POST',
+                                 CONTENT_LENGTH=len(post_data))
+        environ['wsgi.input'] = BufferedReader(
+            BytesIO(post_data.encode('utf-8')))
+        self.controller.request = Request.from_environ(environ, 'watson.http.sessions.Memory')
+        response = self.controller.reset_action()
+        assert response.headers['location'] == '/'
+
+    def test_invalid_token(self):
+        post_data = ''
+        environ = sample_environ(PATH_INFO='/reset-password',
+                                 REQUEST_METHOD='POST',
+                                 CONTENT_LENGTH=len(post_data))
+        environ['wsgi.input'] = BufferedReader(
+            BytesIO(post_data.encode('utf-8')))
+        self.controller.request = Request.from_environ(environ, 'watson.http.sessions.Memory')
+        response = self.controller.reset_action()
+        assert response.headers['location'] == '/'

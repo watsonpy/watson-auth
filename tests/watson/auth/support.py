@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from wsgiref import util
 from sqlalchemy import Column, String
-from sqlalchemy.ext.declarative import declarative_base
 from watson.framework import applications, events, controllers
+from watson.http.messages import Request
 from watson.auth.decorators import login
 
 
@@ -31,8 +31,11 @@ app_config = {
         }
     },
     'auth': {
-        'db': {
-            'user_model': 'tests.watson.auth.support.TestUser'
+        'model': {
+            'class': 'tests.watson.auth.support.TestUser'
+        },
+        'forgotten_password': {
+            'from': 'test@test.com'
         }
     },
     'routes': {
@@ -47,7 +50,8 @@ app_config = {
             'options': {
                 'controller': 'tests.watson.auth.support.TestController'
             }
-        }
+        },
+        'reset-password': {}
     },
     'session': {
         'class': 'watson.http.sessions.Memory'
@@ -61,11 +65,27 @@ app_config = {
         events.INIT: [
             ('watson.auth.listeners.Init', 1, True)
         ],
+    },
+    'mail': {
+        'backend': {
+            'class': 'tests.watson.auth.support.MockMailBackend'
+        }
     }
 }
 
 # Initialize a sample application
 app = applications.Http(app_config)
+request = Request.from_environ(sample_environ())
+
+
+class MockMailBackend(object):
+    def send(self, message, **kwargs):
+        pass
+
+
+class TestSampleForm(object):
+    field_one = None
+    field_two = None
 
 
 class TestController(controllers.Rest):
@@ -73,7 +93,7 @@ class TestController(controllers.Rest):
         pass
 
     @login
-    def POST(self):
+    def POST(self, form):
         pass
 
 
@@ -86,7 +106,7 @@ class TestUser(models.UserMixin, models.Model):
     """
     __tablename__ = 'users'
     username = Column(String(255), unique=True)
-
+    email = Column(String(255))
 
 # Create the schema
 engine = app.container.get('sqlalchemy_engine_default')
