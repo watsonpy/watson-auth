@@ -1,0 +1,84 @@
+{% if user %}
+<style>
+.watson-debug-toolbar__panel__debug {
+    width: 100%;
+}
+.watson-debug-toolbar__panel__debug th:first-of-type {
+    width: 80px;
+}
+</style>
+<dt>Session</dt>
+<dd>
+    {{ request.session.id }}<br><br>
+    <table class="watson-debug-toolbar__panel__debug">
+        <thead>
+            <tr>
+                <th>Key</th><th>Data</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for key, data in request.session %}
+            <tr>
+                <td>{{ key }}</td>
+                <td>{{ data }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3">No session data.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</dd>
+<dt>Roles</dt>
+<dd>
+    <table class="watson-debug-toolbar__panel__debug">
+        <thead>
+            <tr>
+                <th>Name</th><th>Key</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for role in request.user.roles %}
+            <tr>
+                <td>{{ role.name }}</td>
+                <td>{{ role.key }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3">No roles set for this user.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</dd>
+
+<dt>Permissions</dt>
+<dd>
+    <table class="watson-debug-toolbar__panel__debug">
+        <thead>
+            <tr>
+                <th>Name</th><th>Key</th><th>Value</th><th>Inherited from Role</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for permission_key, permission in request.user.acl.permissions|dictsort %}
+            <tr>
+                <td>{{ permission.name }}</td>
+                <td>{{ permission_key }}</td>
+                <td>{{ permission.value }}</td>
+                <td>{{ True if permission.inherited else False }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3">No permissions set for this user.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</dd>
+<br><br>
+
+{% else %}
+Unauthenticated guest, no data available.
+{% endif %}
