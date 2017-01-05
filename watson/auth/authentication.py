@@ -5,6 +5,7 @@ from watson.auth import models
 from watson.common import imports, decorators
 from watson.db.contextmanagers import transaction_scope
 from sqlalchemy.orm import exc
+from sqlalchemy import or_
 
 
 def generate_password(password, rounds=10, encoding='utf-8'):
@@ -54,13 +55,16 @@ class Authenticator(object):
     session = None
     user_model = None
     user_id_field = None
+    email_field = None
     _config = None
 
-    def __init__(self, config, session, user_model, user_id_field):
+    def __init__(
+            self, config, session, user_model, user_id_field, email_field):
         self._config = config
         self.session = session
         self.user_model = user_model
         self.user_id_field = user_id_field
+        self.email_field = email_field
 
     @decorators.cached_property
     def user_model_class(self):
@@ -80,10 +84,23 @@ class Authenticator(object):
         """
         user_field = getattr(self.user_model_class, self.user_id_field)
         try:
-            user = self.user_query.filter(user_field == username).one()
+            return self.user_query.filter(user_field == username).one()
         except exc.NoResultFound:
             return None
-        return user
+
+    def get_user_by_username_or_email(self, data):
+        """Retrieves a user from the database based on their user or email.
+
+        Args:
+            data (string): The username/email of the user to find.
+        """
+        user_field = getattr(self.user_model_class, self.user_id_field)
+        email_field = getattr(self.user_model_class, self.email_field)
+        try:
+            return self.user_query.filter(
+                or_(user_field == data, email_field == data)).one()
+        except exc.NoResultFound:
+            return None
 
     def get_user_by_id(self, id):
         """Retrieves a user from the database based on their id.
@@ -92,10 +109,9 @@ class Authenticator(object):
             id (int): The id of the user to find.
         """
         try:
-            user = self.user_query.filter_by(id=id).one()
+            return self.user_query.filter_by(id=id).one()
         except exc.NoResultFound:
             return None
-        return user
 
     def authenticate(self, username, password):
         """Validate a user against a supplied username and password.
@@ -153,19 +169,40 @@ class ForgottenPasswordTokenManager(object):
         user.forgotten_password_tokens.append(token)
         with transaction_scope(self.session) as session:
             session.add(user)
-        self.mailer.send(
-            subject=self._config['subject_line'],
-            from_=self._config['from'],
-            template='auth/emails/forgotten-password',
-            body={'user': user, 'token': token, 'request': request},
-            to=getattr(user, self.email_field))
         return token
+
+    def notify_user(self, user, request, subject, template, **kwargs):
+        """Notify a user regarding a specific action via email.
+
+        Args:
+            user (watson.auth.models.User): The user to notify
+            request (watson.http.messages.Request): The HTTP request
+            subject (string): The subject of the email
+            template (string): The html template to be used in the email
+        """
+        body = {'user': user, 'request': request}
+        body.update(kwargs)
+        self.mailer.send(
+            subject=subject,
+            from_=self._config['from'],
+            template=template,
+            body=body,
+            to=getattr(user, self.email_field))
+
+    def delete_token(self, token):
+        """Delete a token.
+
+        Args:
+            token: The token identifier to be deleted
+        """
+        with transaction_scope(self.session) as session:
+            session.delete(token)
 
     def get_token(self, token, model=models.ForgottenPasswordToken):
         """Retrieve a user based on the supplied token.
 
         Args:
-            token (string): The forgotten password token
+            token (string): The forgotten password token identifier
         """
         return self.session.query(
             model).filter_by(

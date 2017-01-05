@@ -144,7 +144,7 @@ def login(func=None, method='POST', form_class=None, auto_redirect=True):
                             if self.request.get['redirect']:
                                 redirect_url = parse.unquote_plus(
                                     self.request.get['redirect'])
-                            return self.redirect(redirect_url)
+                            return self.redirect(redirect_url, clear=True)
                     else:
                         valid = False
                 else:
@@ -224,14 +224,22 @@ def forgotten(func=None, method='POST', form_class=None):
                     authenticator = self.container.get('auth_authenticator')
                     forgotten_password_token_manager = self.container.get(
                         'auth_forgotten_password_token_manager')
-                    username_field = getattr(form, form_config['username_field'])
-                    user = authenticator.get_user(username_field)
+                    username_field = getattr(
+                        form, form_config['username_field'])
+                    user = authenticator.get_user_by_username_or_email(
+                        username_field)
                     if user:
-                        forgotten_password_token_manager.create_token(
+                        token = forgotten_password_token_manager.create_token(
                             user, self.request)
+                        forgotten_password_token_manager.notify_user(
+                            user,
+                            request=self.request,
+                            subject=auth_config['forgotten_password']['subject_line'],
+                            template=auth_config['forgotten_password']['template'],
+                            token=token)
                         invalid = False
                         self.flash_messages.add(
-                            form_config['messages']['success'], 'error')
+                            form_config['messages']['success'], 'success')
                         return self.redirect(str(self.request.url))
                 if invalid:
                     self.flash_messages.add(
@@ -288,12 +296,22 @@ def reset(func=None, method='POST', form_class=None, authenticate_on_reset=False
                         forgotten_password_token_manager.update_user_password(
                             token, form.password)
                         redirect_url = auth_config['login']['urls']['success']
-                    func(self, **kwargs)
-                    return self.redirect(redirect_url)
+                    forgotten_password_token_manager.notify_user(
+                            token.user,
+                            request=self.request,
+                            subject=auth_config['reset_password']['subject_line'],
+                            template=auth_config['reset_password']['template'],
+                            password=form.password)
+                    forgotten_password_token_manager.delete_token(token)
+                    return self.redirect(redirect_url, clear=True)
+                else:
+                    self.flash_messages.add(
+                        form_config['messages']['invalid_match'], 'error')
             if not token:
                 self.flash_messages.add(
                     form_config['messages']['invalid'], 'error')
                 return self.redirect(reset_config['urls']['invalid'])
+            return func(self, **kwargs)
         return wrapper
     if func:
         return decorator(func)

@@ -40,6 +40,7 @@ defaults = {
         }
     },
     'forgotten_password': {
+        'template': 'auth/emails/forgotten-password',
         'urls': {
             'route': 'forgotten-password'
         },
@@ -55,6 +56,8 @@ defaults = {
     },
     'reset_password': {
         'authenticate_on_reset': False,
+        'subject_line': 'Your password has been reset',
+        'template': 'auth/emails/reset-password',
         'urls': {
             'route': 'reset-password',
             'success': '/',
@@ -66,6 +69,7 @@ defaults = {
             'messages': {
                 'success': 'Your password has been changed successfully.',
                 'invalid': 'Could not find your account in the system, please try again.',
+                'invalid_match': 'The supplied passwords do not match, please try again.'
             }
         }
     },
@@ -82,7 +86,8 @@ definitions = {
             'config': lambda container: container.get('application.config')['auth']['authenticator'],
             'session': lambda container: container.get('sqlalchemy_session_{0}'.format(container.get('application.config')['auth']['authenticator']['session'])),
             'user_model': lambda container: container.get('application.config')['auth']['model']['class'],
-            'user_id_field': lambda container: container.get('application.config')['auth']['model']['columns']['username']
+            'user_id_field': lambda container: container.get('application.config')['auth']['model']['columns']['username'],
+            'email_field': lambda container: container.get('application.config')['auth']['model']['columns']['email'],
         },
     },
     'auth_forgotten_password_token_manager': {

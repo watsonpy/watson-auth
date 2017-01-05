@@ -9,14 +9,14 @@ class Login(form.Form):
     """
     username = fields.Text(required=True, label='Username')
     password = fields.Password(required=True, label='Password')
-    login = fields.Submit(button_mode=True)
+    submit = fields.Submit(button_mode=True, label='Login')
 
 
 class ForgottenPassword(form.Form):
     """A standard forgotten password form.
     """
     username = fields.Text(required=True, label='Username')
-    reset = fields.Submit(
+    submit = fields.Submit(
         button_mode=True,
         label='Request Reset')
 
@@ -29,4 +29,4 @@ class ResetPassword(form.Form):
         validators=[validators.Match(field='confirm_password')],
         label='Password')
     confirm_password = fields.Password(required=True, label='Confirm Password')
-    reset = fields.Submit(button_mode=True)
+    submit = fields.Submit(button_mode=True, label='Reset')
