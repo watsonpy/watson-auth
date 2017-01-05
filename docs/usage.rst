@@ -75,6 +75,7 @@ config if required.
             'urls': {
                 'route': 'forgotten-password'
             },
+            'template': 'auth/emails/forgotten-password',
             'subject_line': 'A password reset request has been made',
             'form': {
                 'class': 'watson.auth.forms.ForgottenPassword',
@@ -86,7 +87,9 @@ config if required.
             }
         },
         'reset_password': {
+            'template': 'auth/emails/reset-password',
             'authenticate_on_reset': False,
+            'subject_line': 'Your password has been reset',
             'urls': {
                 'route': 'reset-password',
                 'success': '/',
@@ -179,6 +182,9 @@ watson-auth provides a strongly customizable authorization system. It
 allows you to configure both roles, and permissions for users. The
 management of these however is not controlled by watson-auth, so it will
 be up to you to create the necessary UI to create/delete/update roles.
+
+Please note that some of these actions can also be done via the command
+`./console.py auth`.
 
 Defining the roles and permissions
 ''''''''''''''''''''''''''''''''''
@@ -284,10 +290,10 @@ decorators.
    must have
 -  unauthenticated\_url: The url (or named route) to redirect to if the
    user isn't authenticated. By default this will be
-   config['auth']['url']['unauthenticated']
+   config['auth']['authenticator']['urls']['unauthenticated']
 -  unauthorized\_url: The url (or named route) to redirect to if the
    user isn't authorized. By default this will be
-   config['auth']['url']['unauthorized']
+   config['auth']['authenticator']['urls']['unauthorized']
 -  should\_404: Boolean whether or not to raise a 404 instead of
    redirecting.
 
@@ -345,4 +351,15 @@ above for more information.
 The user will be emailed a link to be able to reset their password. This template
 uses whatever renderer is the default set in your project configuration, and
 can therefore be overridden by creating a new template file in your views
-directory (`emails/forgotten-password.html` and `emails/reset-password.html`).
+directory (`auth/emails/forgotten-password.html` and `auth/emails/reset-password.html`).
+
+The following configuration settings must also be set in order for this to
+function correctly.
+
+::
+
+    'auth': {
+        'forgotten_password': {
+            'from': 'email@from.com',
+        }
+    }

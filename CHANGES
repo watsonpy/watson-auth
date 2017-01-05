@@ -1,3 +1,7 @@
+3.1.0
+- BC: Reset template location changes (auth/emails)
+- Debug panel for authed users
+
 3.0.0
 - BC: Password reset (forgotten password) functionality added, new fields added to user class and moved config for form. Run `./console.py db:migrate revision --autogenerate` to generate the updated schema changes.
 - BC: Refactor of configuration settings
@@ -10,5 +14,5 @@
 2.0.0
 
 - Now requires watson.db 2.0.0
-- BC: Role.key now used for validating role instead of role.name
+- BC: role.key now used for validating role instead of role.name
 - BC: Model declarative base moved from auth, now relies on watson.db
