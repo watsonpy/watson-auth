@@ -34,7 +34,7 @@ class Auth(command.Base, BaseAuthCommand):
     name = 'auth'
 
     @arg('password')
-    def genpass(self, password):
+    def generate_password(self, password):
         """Generates a password based on the application settings.
         """
         salt, new_password = authentication.generate_password(password)
@@ -94,7 +94,7 @@ class Auth(command.Base, BaseAuthCommand):
     @arg('role_key')
     @arg('value', optional=True)
     @arg('database', optional=True)
-    def permission_to_role(self, permission_key, role_key, value, database):
+    def add_permission_to_role(self, permission_key, role_key, value, database):
         """Attaches a permission to a role, with a default of False.
 
         Args:
@@ -118,6 +118,42 @@ class Auth(command.Base, BaseAuthCommand):
                 enabled))
 
     @arg('username')
+    @arg('role_key')
+    @arg('database', optional=True)
+    def add_role_to_user(self, username, role_key, database):
+        session = ensure_session_in_container(self.container, database)
+        auth_authenticator = self.container.get('auth_authenticator')
+        user = auth_authenticator.get_user(username)
+        from watson.auth.models import Role
+        role = session.query(Role).filter_by(key=role_key).first()
+        user.roles.append(role)
+        session.commit()
+        self.write(
+            'Added role {} ({}) to user {} ({})'.format(
+                role.name, role.key,
+                getattr(user, self.config['model']['columns']['username']),
+                user.id))
+
+    @arg('username')
+    @arg('permission_key')
+    @arg('value', optional=True)
+    @arg('database', optional=True)
+    def add_permission_to_user(self, username, permission_key, value, database):
+        session = ensure_session_in_container(self.container, database)
+        auth_authenticator = self.container.get('auth_authenticator')
+        user = auth_authenticator.get_user(username)
+        from watson.auth.models import Permission
+        permission = session.query(Permission).filter_by(key=permission_key).first()
+        enabled = True if value else False
+        user.add_permission(permission, value=enabled)
+        session.commit()
+        self.write(
+            'Added permission {} ({}) to user {} ({}) with value: {}'.format(
+                permission.name, permission.key,
+                getattr(user, self.config['model']['columns']['username']),
+                user.id, enabled))
+
+    @arg('username')
     @arg('password')
     @arg('database', optional=True)
     def create_user(self, username, password, database):
@@ -129,12 +165,12 @@ class Auth(command.Base, BaseAuthCommand):
             database: The name of the database session.
         """
         session = ensure_session_in_container(self.container, database)
-        db_config = self.config['db']
-        user_model = db_config['user_model']
+        db_config = self.config['model']
+        user_model = db_config['class']
         model_class = imports.load_definition_from_string(user_model)
         with transaction_scope(session) as session:
             user = model_class()
-            setattr(user, db_config['username_field'], username)
+            setattr(user, db_config['columns']['username'], username)
             setattr(user, 'password', password)
             session.add(user)
             self.write('Created user {}'.format(username))
