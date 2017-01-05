@@ -29,7 +29,7 @@ class Init(ContainerAware):
 
     def setup_database(self, event):
         # Initialize watson.db if it hasn't been added to the app config
-        db_listener = ('watson.db.listeners.Init', 1, True)
+        db_listener = ('watson.db.listeners.Init', 1, False)
         if db_listener not in self.app_config['events'][events.INIT]:
             listener = self.container.get('watson.db.listeners.Init')
             listener(event)
