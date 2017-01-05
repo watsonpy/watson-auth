@@ -31,6 +31,8 @@ class Acl(object):
 
     @property
     def permissions(self):
+        if not self._permissions:
+            self._generate_user_permissions()
         return self._permissions
 
     def has_role(self, role_key):
@@ -55,11 +57,9 @@ class Acl(object):
         Args:
             permission (string): The permission to find.
         """
-        if not self._permissions:
-            self._generate_user_permissions()
-        if permission not in self._permissions.keys():
+        if permission not in self.permissions.keys():
             return self.allow_default
-        if not self._permissions[permission].value:
+        if not self.permissions[permission].value:
             return False
         return True
 
