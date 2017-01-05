@@ -16,6 +16,7 @@ def sample_environ(**kwargs):
     environ.update(kwargs)
     return environ
 
+
 app_config = {
     'debug': {
         'enabled': True
@@ -63,7 +64,7 @@ app_config = {
     },
     'events': {
         events.INIT: [
-            ('watson.auth.listeners.Init', 1, True)
+            ('watson.auth.listeners.Init', 1)
         ],
     },
     'mail': {
