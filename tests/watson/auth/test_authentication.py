@@ -14,7 +14,7 @@ class TestPasswords(object):
         assert not authentication.check_password('testing', password, salt)
 
     def test_forgotten_token(self):
-        assert authentication.generate_forgotten_token()
+        assert managers.generate_forgotten_token()
 
 
 class TestAuthenticator(object):
