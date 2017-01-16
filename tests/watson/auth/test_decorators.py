@@ -7,7 +7,7 @@ from watson.http.messages import Request
 from watson.framework import controllers, exceptions
 from tests.watson.auth import support
 from watson.auth.decorators import auth, login, logout, forgotten, reset
-from watson.auth import authentication
+from watson.auth import authentication, managers
 from watson.validators import abc
 
 
@@ -301,7 +301,7 @@ class TestResetPassword(object):
 
     def test_valid_token(self):
         authenticator = support.app.container.get('auth_authenticator')
-        manager = authentication.ForgottenPasswordTokenManager(
+        manager = managers.ForgottenPasswordToken(
             config=support.app.container.get('application.config')['auth']['forgotten_password'],
             session=authenticator.session,
             mailer=support.app.container.get('mailer'),
