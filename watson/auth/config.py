@@ -91,7 +91,7 @@ definitions = {
         },
     },
     'auth_forgotten_password_token_manager': {
-        'item': 'watson.auth.authentication.ForgottenPasswordTokenManager',
+        'item': 'watson.auth.managers.ForgottenPasswordToken',
         'init': {
             'config': lambda container: container.get('application.config')['auth']['forgotten_password'],
             'session': lambda container: container.get('sqlalchemy_session_{0}'.format(container.get('application.config')['auth']['authenticator']['session'])),

@@ -1,5 +1,5 @@
 from tests.watson.auth import support
-from watson.auth import authentication
+from watson.auth import authentication, managers
 
 
 class TestPasswords(object):
@@ -44,7 +44,7 @@ class TestAuthenticator(object):
 class TestForgottenPasswordTokenManager(object):
     def setup(self):
         self.authenticator = support.app.container.get('auth_authenticator')
-        self.manager = authentication.ForgottenPasswordTokenManager(
+        self.manager = managers.ForgottenPasswordToken(
             config=support.app.container.get('application.config')['auth']['forgotten_password'],
             session=self.authenticator.session,
             mailer=support.app.container.get('mailer'),
