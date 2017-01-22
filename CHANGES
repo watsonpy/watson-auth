@@ -1,3 +1,6 @@
+3.3.0
+- Added in some basic controller actions and views. These can be overriden.
+
 3.1.0
 - BC: Reset template location changes (auth/emails)
 - Debug panel for authed users

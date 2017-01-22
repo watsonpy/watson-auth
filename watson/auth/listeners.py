@@ -48,6 +48,9 @@ class Init(ContainerAware):
         self.app_config['auth'] = auth_config
         self.container.get('jinja2_renderer').add_package_loader(
             'watson.auth', 'views')
+        for route, definition in config.routes.items():
+            definition['name'] = route
+            self.container.get('router').add_definition(definition)
 
     def setup_authenticator(self):
         for name, definition in config.definitions.items():

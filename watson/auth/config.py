@@ -78,6 +78,29 @@ defaults = {
     },
 }
 
+routes = {
+    'login': {
+        'path': '/login',
+        'options': {'controller': 'watson.auth.controllers.Auth'},
+        'defaults': {'action': 'login'}
+    },
+    'logout': {
+        'path': '/logout',
+        'options': {'controller': 'watson.auth.controllers.Auth'},
+        'defaults': {'action': 'logout'}
+    },
+    'forgotten-password': {
+        'path': '/forgotten',
+        'options': {'controller': 'watson.auth.controllers.Auth'},
+        'defaults': {'action': 'forgotten_password'}
+    },
+    'reset-password': {
+        'path': '/reset',
+        'options': {'controller': 'watson.auth.controllers.Auth'},
+        'defaults': {'action': 'reset_password'}
+    },
+}
+
 
 definitions = {
     'auth_authenticator': {
