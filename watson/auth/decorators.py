@@ -85,19 +85,29 @@ def auth(func=None, roles=None, permissions=None, requires=None,
         return decorator
 
 
-def login(func=None, method='POST', form_class=None, auto_redirect=True):
+def login(
+        func=None,
+        method='POST',
+        form_class=None,
+        auto_redirect=True,
+        authenticated_callback=None):
     """Attempts to authenticate a user if the required fields have been posted.
 
     By setting auto_redirect to False, the user roles and permissions can be
     checked within the login route and redirected from there.
 
     Args:
-        func (callable): the function that is being wrapped
+        func (callable): The function that is being wrapped
         method (string): The HTTP method that authentication will be performed
                          against.
         form_class (string): The qualified class name of the form.
         auto_redirect (boolean): Whether or not to automatically redirect to a
                                  different url on successful login.
+        authenticated_callback (callable): An additional callback that can be
+                                           used to authenticate the user after
+                                           a valid user record has been found.
+                                           Takes user and request objects as
+                                           arguments.
 
     Example:
 
@@ -134,19 +144,21 @@ def login(func=None, method='POST', form_class=None, auto_redirect=True):
                     user = authenticator.authenticate(
                         username=username_field,
                         password=password_field)
-                    if user:
+                    if not user:
+                        valid = False
+                    if valid and authenticated_callback and not authenticated_callback(user, self.request):
+                        valid = False
+                    if valid and user:
                         authenticator.assign_user_to_session(
                             user,
                             self.request,
                             auth_config['session']['key'])
-                        if auto_redirect:
-                            redirect_url = login_config['urls']['success']
-                            if self.request.get['redirect']:
-                                redirect_url = parse.unquote_plus(
-                                    self.request.get['redirect'])
-                            return self.redirect(redirect_url, clear=True)
-                    else:
-                        valid = False
+                    if valid and user and auto_redirect:
+                        redirect_url = login_config['urls']['success']
+                        if self.request.get['redirect']:
+                            redirect_url = parse.unquote_plus(
+                                self.request.get['redirect'])
+                        return self.redirect(redirect_url, clear=True)
                 else:
                     valid = False
             if not valid:
@@ -285,24 +297,23 @@ def reset(func=None, method='POST', form_class=None, authenticate_on_reset=False
                 form.data = request
                 if form.is_valid():
                     self.flash_messages.add(
-                        form_config['messages']['success'], 'error')
+                        form_config['messages']['success'], 'success')
                     redirect_url = reset_config['urls']['success']
                     auto_login = authenticate_on_reset or reset_config['authenticate_on_reset']
-                    if auto_login:
-                        authenticator.assign_user_to_session(
-                            token.user,
-                            request,
-                            auth_config['session']['key'])
-                        forgotten_password_token_manager.update_user_password(
-                            token, form.password)
-                        redirect_url = auth_config['login']['urls']['success']
+                    forgotten_password_token_manager.update_user_password(
+                        token, form.password)
                     forgotten_password_token_manager.notify_user(
                             token.user,
                             request=self.request,
                             subject=auth_config['reset_password']['subject_line'],
                             template=auth_config['reset_password']['template'],
                             password=form.password)
-                    forgotten_password_token_manager.delete_token(token)
+                    if auto_login:
+                        authenticator.assign_user_to_session(
+                            token.user,
+                            request,
+                            auth_config['session']['key'])
+                        redirect_url = auth_config['login']['urls']['success']
                     return self.redirect(redirect_url, clear=True)
                 else:
                     self.flash_messages.add(

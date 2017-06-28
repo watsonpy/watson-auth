@@ -16,7 +16,8 @@ def generate_password(password, rounds=10, encoding='utf-8'):
         mixed: The generated password and the salt used
     """
     salt = bcrypt.gensalt(rounds)
-    return bcrypt.hashpw(password.encode(encoding), salt), salt
+    hashed_password = bcrypt.hashpw(password.encode(encoding), salt)
+    return hashed_password.decode(encoding), salt.decode(encoding)
 
 
 def check_password(password, existing_password, salt, encoding='utf-8'):
@@ -31,6 +32,10 @@ def check_password(password, existing_password, salt, encoding='utf-8'):
     Returns:
         boolean: True/False if valid or invalid
     """
+    if isinstance(salt, str):
+        salt = salt.encode(encoding)
+    if isinstance(existing_password, str):
+        existing_password = existing_password.encode(encoding)
     return bcrypt.hashpw(password.encode(encoding), salt) == existing_password
 
 

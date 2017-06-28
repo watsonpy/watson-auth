@@ -1,4 +1,3 @@
-{% if user %}
 <style>
 .watson-debug-toolbar__panel__debug {
     width: 100%;
@@ -7,29 +6,7 @@
     width: 80px;
 }
 </style>
-<dt>Session</dt>
-<dd>
-    {{ request.session.id }}<br><br>
-    <table class="watson-debug-toolbar__panel__debug">
-        <thead>
-            <tr>
-                <th>Key</th><th>Data</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for key, data in request.session %}
-            <tr>
-                <td>{{ key }}</td>
-                <td>{{ data }}</td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="3">No session data.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</dd>
+{% if user %}
 <dt>Roles</dt>
 <dd>
     <table class="watson-debug-toolbar__panel__debug">
@@ -71,7 +48,7 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="3">No permissions set for this user.</td>
+                <td colspan="4">No permissions set for this user.</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -79,6 +56,27 @@
 </dd>
 <br><br>
 
-{% else %}
-Unauthenticated guest, no data available.
 {% endif %}
+<dt>Session</dt>
+<dd>
+    {{ request.session.id }} {{ request.session.timeout }}<br><br>
+    <table class="watson-debug-toolbar__panel__debug">
+        <thead>
+            <tr>
+                <th>Key</th><th>Data</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for key, data in request.session %}
+            <tr>
+                <td>{{ key }}</td>
+                <td>{{ data }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3">No session data.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</dd>

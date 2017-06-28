@@ -7,7 +7,7 @@ from watson.http.messages import Request
 from watson.framework import controllers, exceptions
 from tests.watson.auth import support
 from watson.auth.decorators import auth, login, logout, forgotten, reset
-from watson.auth import authentication, managers
+from watson.auth import managers
 from watson.validators import abc
 
 
@@ -30,6 +30,14 @@ class SampleValidValidator(abc.Validator):
 class SampleInvalidValidator(abc.Validator):
     def __call__(self, value):
         return False
+
+
+def authenticated_callback_success(user, request):
+    return True
+
+
+def authenticated_callback_failure(user, request):
+    return False
 
 
 class SampleController(controllers.Action):
@@ -61,6 +69,14 @@ class SampleController(controllers.Action):
     @login
     def login_redirect_action(self, form):
         return 'login'
+
+    @login(authenticated_callback=authenticated_callback_success)
+    def login_authenticated_callback_success(self):
+        return 'success'
+
+    @login(authenticated_callback=authenticated_callback_failure)
+    def login_authenticated_callback_failure(self):
+        return 'success'
 
     @auth(roles='admin', unauthorized_url='/unauthorized-test')
     def unauthorized_custom_url_action(self):
@@ -161,6 +177,19 @@ class TestLogin(object):
         self.controller.request = Request.from_environ(environ, 'watson.http.sessions.Memory')
         response = self.controller.login_redirect_action()
         assert response.headers['location'] == 'http://127.0.0.1/existing-url?to-here&and-here'
+
+    def test_authenticated_callback(self):
+        post_data = 'username=admin&password=test'
+        environ = sample_environ(REQUEST_METHOD='POST',
+                                 CONTENT_LENGTH=len(post_data))
+        environ['wsgi.input'] = BufferedReader(
+            BytesIO(post_data.encode('utf-8')))
+        self.controller.request = Request.from_environ(environ, 'watson.http.sessions.Memory')
+        self.controller.login_authenticated_callback_failure()
+        assert len(self.controller.flash_messages)
+        self.controller.flash_messages.clear()
+        self.controller.login_authenticated_callback_success()
+        assert not len(self.controller.flash_messages)
 
 
 class TestLogout(object):
