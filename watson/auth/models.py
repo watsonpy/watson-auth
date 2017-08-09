@@ -5,7 +5,7 @@ from sqlalchemy import (Column, Integer, String, DateTime, ForeignKey,
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
 from watson.common import imports
-from watson.auth import authentication, authorization
+from watson.auth import authorization, crypto
 from watson.db.models import Model
 from watson.db.utils import _table_attr
 
@@ -110,7 +110,7 @@ class UserMixin(object):
         Args:
             string password: The password to set.
         """
-        _pass, salt = authentication.generate_password(password)
+        _pass, salt = crypto.generate_password(password)
         self._password = _pass
         self.salt = salt
 

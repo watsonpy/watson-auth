@@ -20,7 +20,8 @@ Requirements
 ------------
 
 -  watson-db
--  py3k-bcrypt
+-  bcrypt
+-  pyjwt
 
 Installation
 ------

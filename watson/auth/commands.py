@@ -5,7 +5,7 @@ from watson.common import imports
 from watson.db.session import NAME as session_name
 from watson.db.contextmanagers import transaction_scope
 from watson.di import ContainerAware
-from watson.auth import authentication
+from watson.auth import crypto
 
 
 class BaseAuthCommand(ContainerAware):
@@ -37,7 +37,7 @@ class Auth(command.Base, BaseAuthCommand):
     def generate_password(self, password):
         """Generates a password based on the application settings.
         """
-        salt, new_password = authentication.generate_password(password)
+        salt, new_password = crypto.generate_password(password)
         self.write('Generated hashed password from "{}"'.format(password))
         self.write('Password: {}'.format(new_password))
         self.write('Salt: {}'.format(salt))
@@ -120,10 +120,18 @@ class Auth(command.Base, BaseAuthCommand):
     @arg('username')
     @arg('role_key')
     @arg('database', optional=True)
-    def add_role_to_user(self, username, role_key, database):
+    @arg('auth_provider', optional=True, default='watson.auth.providers.Session')
+    def add_role_to_user(self, username, role_key, auth_provider, database):
+        """Attaches a role to a user.
+
+        Args:
+            username: The username to attach the role to
+            role_key: The identifier for the role
+            database: The name of the database session.
+        """
         session = ensure_session_in_container(self.container, database)
-        auth_authenticator = self.container.get('auth_authenticator')
-        user = auth_authenticator.get_user(username)
+        provider = self.container.get(auth_provider)
+        user = provider.get_user(username)
         from watson.auth.models import Role
         role = session.query(Role).filter_by(key=role_key).first()
         user.roles.append(role)
@@ -131,17 +139,26 @@ class Auth(command.Base, BaseAuthCommand):
         self.write(
             'Added role {} ({}) to user {} ({})'.format(
                 role.name, role.key,
-                getattr(user, self.config['model']['columns']['username']),
+                getattr(user, provider.config['model']['identifier']),
                 user.id))
 
     @arg('username')
     @arg('permission_key')
     @arg('value', optional=True)
     @arg('database', optional=True)
-    def add_permission_to_user(self, username, permission_key, value, database):
+    @arg('auth_provider', optional=True, default='watson.auth.providers.Session')
+    def add_permission_to_user(self, username, permission_key, value, auth_provider, database):
+        """Attaches a role to a user.
+
+        Args:
+            username: The username to attach the role to
+            permission_key: The identifier for the permission
+            value: The value of the permission (1 or 0)
+            database: The name of the database session.
+        """
         session = ensure_session_in_container(self.container, database)
-        auth_authenticator = self.container.get('auth_authenticator')
-        user = auth_authenticator.get_user(username)
+        provider = self.container.get(auth_provider)
+        user = provider.get_user(username)
         from watson.auth.models import Permission
         permission = session.query(Permission).filter_by(key=permission_key).first()
         enabled = True if value else False
@@ -150,13 +167,14 @@ class Auth(command.Base, BaseAuthCommand):
         self.write(
             'Added permission {} ({}) to user {} ({}) with value: {}'.format(
                 permission.name, permission.key,
-                getattr(user, self.config['model']['columns']['username']),
+                getattr(user, provider.config['model']['identifier']),
                 user.id, enabled))
 
     @arg('username')
     @arg('password')
     @arg('database', optional=True)
-    def create_user(self, username, password, database):
+    @arg('auth_provider', optional=True, default='watson.auth.providers.Session')
+    def create_user(self, username, password, auth_provider, database):
         """Create a new user.
 
         Args:
@@ -165,15 +183,32 @@ class Auth(command.Base, BaseAuthCommand):
             database: The name of the database session.
         """
         session = ensure_session_in_container(self.container, database)
-        db_config = self.config['model']
-        user_model = db_config['class']
+        provider = self.container.get(auth_provider)
+        user_model = provider.config['model']['class']
         model_class = imports.load_definition_from_string(user_model)
         with transaction_scope(session) as session:
             user = model_class()
-            setattr(user, db_config['columns']['username'], username)
+            setattr(user, provider.config['model']['identifier'], username)
             setattr(user, 'password', password)
             session.add(user)
             self.write('Created user {}'.format(username))
+
+    @arg('username')
+    @arg('database', optional=True)
+    @arg('auth_provider', optional=True, default='watson.auth.providers.Session')
+    def delete_user(self, username, auth_provider, database):
+        """Delete a user.
+
+        Args:
+            username: The username of the user
+            database: The name of the database session.
+        """
+        session = ensure_session_in_container(self.container, database)
+        provider = self.container.get(auth_provider)
+        user = provider.get_user(username)
+        with transaction_scope(session) as session:
+            session.delete(user)
+            self.write('Deleted user {}'.format(username))
 
     @arg('database', optional=True)
     def list_permissions(self, database):

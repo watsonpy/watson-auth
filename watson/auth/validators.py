@@ -15,7 +15,7 @@ class Match(abc.Validator):
         self.message = message
         self.field = field
 
-    def __call__(self, value, form):
+    def __call__(self, value, form, field=None):
         matching_field_value = getattr(form, self.field)
         if value != matching_field_value:
             raise ValueError(self.message.format(

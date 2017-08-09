@@ -3,7 +3,9 @@ from wsgiref import util
 from sqlalchemy import Column, String
 from watson.framework import applications, events, controllers
 from watson.http.messages import Request
-from watson.auth.decorators import login
+from watson.auth.providers.session.decorators import login as session_login
+from watson.auth import config
+from watson.common.datastructures import dict_deep_update
 
 
 def start_response(status_line, headers):
@@ -25,19 +27,18 @@ app_config = {
         'connections': {
             'default': {
                 'connection_string': 'sqlite:///:memory:',
-                'engine_options': {
-                    'echo': False
-                }
             }
         }
     },
     'auth': {
-        'model': {
-            'class': 'tests.watson.auth.support.TestUser'
+        'common': {
+            'model': {
+                'class': 'tests.watson.auth.support.TestUser'
+            },
+            'system_email_from_address': 'test@test.com',
+            'reset_password_route': 'auth/reset-password',
+            'forgotten_password_route': 'auth/forgotten-password'
         },
-        'forgotten_password': {
-            'from': 'test@test.com'
-        }
     },
     'routes': {
         'home': {
@@ -71,12 +72,26 @@ app_config = {
         'backend': {
             'class': 'tests.watson.auth.support.MockMailBackend'
         }
-    }
+    },
 }
 
 # Initialize a sample application
 app = applications.Http(app_config)
-request = Request.from_environ(sample_environ())
+request = Request.from_environ(
+    sample_environ(), session_class='watson.http.sessions.Memory')
+
+default_provider_settings = dict_deep_update(
+    config.defaults['common'],
+    {
+        'model': {
+            'class': 'tests.watson.auth.support.TestUser'
+        },
+        'secret': 'APP_SECRET',
+        'algorithm': 'HS256',
+        'system_email_from_address': 'test@test.com',
+        'reset_password_route': 'auth/reset-password',
+        'forgotten_password_route': 'auth/forgotten-password'
+    })
 
 
 class MockMailBackend(object):
@@ -93,7 +108,7 @@ class TestController(controllers.Rest):
     def GET(self):
         pass
 
-    @login
+    @session_login
     def POST(self, form):
         pass
 
@@ -148,7 +163,7 @@ role_guest.add_permission(permission_read)
 guest_user = TestUser(username='test', password='test')
 guest_user.roles.append(role_guest)
 session.add(guest_user)
-admin_user = TestUser(username='admin', password='test')
+admin_user = TestUser(username='admin', email='admin@test.com', password='test')
 admin_user.roles.append(role_admin)
 session.add(admin_user)
 regular_user = TestUser(username='regular', password='test')

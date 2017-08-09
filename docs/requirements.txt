@@ -2,4 +2,5 @@ sphinxcontrib-napoleon
 watson-db
 watson-common
 watson-mail
-bcrypt
+bcrypt==3.1.2
+PyJWT==1.5.2

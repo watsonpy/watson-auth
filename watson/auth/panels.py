@@ -18,7 +18,7 @@ class User(abc.Panel):
         if hasattr(self.request, 'user') and getattr(self.request, 'user'):
             user = getattr(
                 getattr(self.request, 'user'),
-                self.application.config['auth']['model']['columns']['username']
+                self.application.config['auth']['common']['model']['identifier']
             )
         return user
 
@@ -30,4 +30,3 @@ class User(abc.Panel):
 
     def render_key_stat(self):
         return self.user
-

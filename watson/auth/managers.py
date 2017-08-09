@@ -15,18 +15,16 @@ class ForgottenPasswordToken(object):
     """Manages a users forgotten password.
 
     Attributes:
-        email_field (string): The email property of the user model.
+        email_address_field (string): The email property of the user model.
         mailer (watson.mail.backends.abc.Base): The mailer backend used to send the email.
     """
-    email_field = None
+    email_address_field = None
     mailer = None
-    _config = None
+    provider = None
 
-    def __init__(self, config, session, mailer, email_field):
-        self._config = config
-        self.session = session
+    def __init__(self, mailer, email_address_field):
         self.mailer = mailer
-        self.email_field = email_field
+        self.email_address_field = email_address_field
 
     def create_token(self, user, request):
         """Create a new forgotten password token.
@@ -40,7 +38,7 @@ class ForgottenPasswordToken(object):
         """
         token = models.ForgottenPasswordToken(token=generate_forgotten_token())
         user.forgotten_password_tokens.append(token)
-        with transaction_scope(self.session) as session:
+        with transaction_scope(self.provider.session) as session:
             session.add(user)
         return token
 
@@ -53,14 +51,14 @@ class ForgottenPasswordToken(object):
             subject (string): The subject of the email
             template (string): The html template to be used in the email
         """
-        body = {'user': user, 'request': request}
+        body = {'user': user, 'request': request, 'provider': self.provider}
         body.update(kwargs)
         self.mailer.send(
             subject=subject,
-            from_=self._config['from'],
+            from_=self.provider.config['system_email_from_address'],
             template=template,
             body=body,
-            to=getattr(user, self.email_field))
+            to=getattr(user, self.email_address_field))
 
     def delete_token(self, token):
         """Delete a token.
@@ -68,7 +66,7 @@ class ForgottenPasswordToken(object):
         Args:
             token: The token identifier to be deleted
         """
-        with transaction_scope(self.session) as session:
+        with transaction_scope(self.provider.session) as session:
             session.delete(token)
 
     def get_token(self, token, model=models.ForgottenPasswordToken):
@@ -77,7 +75,7 @@ class ForgottenPasswordToken(object):
         Args:
             token (string): The forgotten password token identifier
         """
-        return self.session.query(
+        return self.provider.session.query(
             model).filter_by(
                 token=token).order_by(model.id.desc()).first()
 
@@ -88,6 +86,6 @@ class ForgottenPasswordToken(object):
         deleted to prevent further access of that token.
         """
         token.user.password = password
-        with transaction_scope(self.session) as session:
+        with transaction_scope(self.provider.session) as session:
             session.add(token.user)
             session.delete(token)

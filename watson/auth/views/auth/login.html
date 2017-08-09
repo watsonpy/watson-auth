@@ -2,6 +2,9 @@
 
 {% block body %}
 <h1>Login</h1>
+{% for namespace, message in flash_messages() %}
+<div class="message message--{{ namespace }}">{{ message }}</div>
+{% endfor %}
 {{ form.open() }}
 {{ form.username|label }}
 {{ form.password|label }}

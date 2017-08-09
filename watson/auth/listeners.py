@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from watson.common import datastructures
+from watson.common import datastructures, imports
 from watson.console.command import find_commands_in_module
 from watson.di import ContainerAware
 from watson.framework import events
@@ -11,58 +11,71 @@ class Init(ContainerAware):
     """Bootstraps watson.auth into the event system of watson.
     """
 
-    __ioc_definition__ = {
-        'property': {
-            'app_config': 'application.config',
-        }
-    }
-
-    app_config = None
-
     def __call__(self, event):
-        app = event.target
-        self.setup_database(event)
-        self.setup_config()
-        self.load_default_commands(app.config)
-        self.setup_listeners()
-        self.setup_authenticator()
+        self.ensure_database_initialised(event)
+        self.update_config(event.target)
+        self.setup_providers(event.target)
+        self.setup_forgotten_password_manager(event.target)
+        self.load_default_commands(event.target.config)
+        self.setup_route_listener()
 
-    def setup_database(self, event):
-        # Initialize watson.db if it hasn't been added to the app config
-        db_listener = ('watson.db.listeners.Init', 1, False)
-        if db_listener not in self.app_config['events'][events.INIT]:
-            listener = self.container.get('watson.db.listeners.Init')
+    def ensure_database_initialised(self, event):
+        app_config = event.target.config
+        event_name = 'watson.db.listeners.Init'
+        db_listener = (event_name, 1, False)
+        if db_listener not in app_config['events'][events.INIT]:
+            listener = self.container.get(event_name)
             listener(event)
 
     def load_default_commands(self, config):
-        """Load some existing
-        """
         existing_commands = config.get('commands', [])
         db_commands = find_commands_in_module(commands)
         db_commands.extend(existing_commands)
         config['commands'] = db_commands
 
-    def setup_config(self):
-        auth_config = datastructures.dict_deep_update(
-            config.defaults, self.app_config.get('auth', {}))
-        self.app_config['auth'] = auth_config
+    def update_config(self, app):
+        app.config['auth'] = datastructures.dict_deep_update(
+            config.defaults, app.config.get('auth', {}))
+        app.container.get('app_exception_listener').templates.update(
+            config.templates)
         self.container.get('jinja2_renderer').add_package_loader(
             'watson.auth', 'views')
-        router = self.container.get('router')
-        for route, definition in config.routes.items():
-            if route not in router:
-                definition['name'] = route
-                router.add_definition(definition)
 
-    def setup_authenticator(self):
-        for name, definition in config.definitions.items():
-            dependency_config = datastructures.dict_deep_update(
-                config.definitions[name],
-                self.app_config['dependencies']['definitions'].get(name, {}))
-            self.app_config['dependencies']['definitions'][name] = dependency_config
-            self.container.definitions[name] = dependency_config
+    def setup_providers(self, app):
+        auth_config = app.config['auth']
+        if not auth_config['providers']:
+            auth_config['providers'][auth_config['default_provider']] = {}
+        for provider, config_ in auth_config['providers'].items():
+            self._setup_provider(app, provider, config_)
 
-    def setup_listeners(self):
+    def _setup_provider(self, app, provider, config_):
+        auth_config = app.config['auth']
+        provider_ = imports.load_definition_from_string(provider)
+        provider_config = datastructures.dict_deep_update(
+            auth_config['common'], provider_.defaults)
+        provider_config = datastructures.dict_deep_update(
+            provider_config, config_)
+        config_.update(provider_config)
+        dependency_config = {
+            'init': {
+                'config': lambda container: container.get('application.config')['auth']['providers'][provider],
+                'session': lambda container: container.get('sqlalchemy_session_{0}'.format(container.get('application.config')['auth']['providers'][provider]['session'])),
+            }
+        }
+        dependency_config.update(app.config['dependencies'][
+                                    'definitions'].get(provider, {}))
+        app.container.add_definition(provider, dependency_config)
+
+    def setup_forgotten_password_manager(self, app):
+        app.container.add_definition('auth_forgotten_password_token_manager', {
+            'item': 'watson.auth.managers.ForgottenPasswordToken',
+            'init': {
+                'mailer': 'mailer',
+                'email_address_field': app.config['auth']['common']['model']['email_address']
+            }
+        })
+
+    def setup_route_listener(self):
         dispatcher = self.container.get('shared_event_dispatcher')
         dispatcher.add(
             events.ROUTE_MATCH,
@@ -80,8 +93,6 @@ class Route(ContainerAware):
     def __call__(self, event):
         auth_config = self.container.get('application').config['auth']
         request = event.params['context']['request']
-        request.user = None
-        user_id = request.session[auth_config['session']['key']]
-        if user_id:
-            authenticator = self.container.get('auth_authenticator')
-            request.user = authenticator.get_user(user_id)
+        for provider in auth_config['providers']:
+            provider = self.container.get(provider)
+            provider.handle_request(request)

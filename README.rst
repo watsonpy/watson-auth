@@ -20,7 +20,8 @@ Dependencies
 ------------
 
 -  watson-db
--  py3k-bcrypt
+-  bcrypt
+-  pyjwt
 
 .. |Build Status| image:: https://img.shields.io/travis/watsonpy/watson-auth.svg?maxAge=2592000
    :target: https://travis-ci.org/watsonpy/watson-auth
