@@ -24,7 +24,7 @@ def ensure_session_in_container(container, session):
         session = 'default'
     try:
         return container.get(session_name.format(session))
-    except:
+    except Exception:
         raise ConsoleError('No database named {}'.format(session))
 
 

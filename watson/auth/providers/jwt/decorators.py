@@ -105,7 +105,7 @@ def auth(func=None, roles=None, permissions=None, requires=None):
                 if not provider.is_authorized(
                         user, roles, permissions, requires):
                     status_code = 401
-            if status_code is not 200:
+            if status_code != 200:
                 self.response.status_code = status_code
                 return self.response
             return func(self, **kwargs)

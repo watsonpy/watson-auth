@@ -254,11 +254,11 @@ def reset(
                         forgotten_password_token_manager.update_user_password(
                             token, form.password)
                         forgotten_password_token_manager.notify_user(
-                                token.user,
-                                request=self.request,
-                                subject=subject,
-                                template=template,
-                                password=form.password)
+                            token.user,
+                            request=self.request,
+                            subject=subject,
+                            template=template,
+                            password=form.password)
                         if authenticate_on_reset:
                             provider.login(token.user, self.request)
                 else:

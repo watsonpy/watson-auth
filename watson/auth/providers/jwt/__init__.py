@@ -52,5 +52,5 @@ class Provider(abc.Base):
                         algorithms=[self.config['algorithm']])
                     username = payload[self.config['key']]
                     request.user = self.get_user(username)
-                except:
+                except:  # noqa, pragma: no cover
                     pass

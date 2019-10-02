@@ -63,7 +63,7 @@ class Init(ContainerAware):
             }
         }
         dependency_config.update(app.config['dependencies'][
-                                    'definitions'].get(provider, {}))
+            'definitions'].get(provider, {}))
         app.container.add_definition(provider, dependency_config)
 
     def setup_forgotten_password_manager(self, app):
