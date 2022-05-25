@@ -3,4 +3,4 @@ watson-db
 watson-common
 watson-mail
 bcrypt==3.1.2
-PyJWT==1.5.2
+PyJWT==2.4.0
